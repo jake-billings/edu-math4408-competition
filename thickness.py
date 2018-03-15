@@ -21,6 +21,9 @@ from math import floor
 # import networkx
 import networkx as nx
 
+# import planarity testing
+from planarity import is_planar
+
 
 # edge_count_of_complete_graph
 #
@@ -40,15 +43,22 @@ def edge_count_of_complete_graph(n):
 def thickness(G):
     # Complete Graphs
     #
-    # Alekseev, V. B.; Goncakov, V. S.
     # The thickness of an arbitrary complete graph is given by
     # floor((n+7)/6) (except for where n=9,10 where thickness is 3)
+    #
+    # Alekseev, V. B.; Goncakov, V. S.
     # https://mathscinet.ams.org/mathscinet-getitem?mr=0460162
     if G.number_of_edges() == edge_count_of_complete_graph(G.number_of_nodes()):
         if G.number_of_nodes() == 9 or G.number_of_nodes() == 10:
             return 3
         else:
             return floor((G.number_of_nodes() + 7) / 6)
+
+    # Planar Graphs
+    #
+    # The thickness of any planar graph is 1
+    if is_planar(G):
+        return 1
 
     raise NotImplementedError('We don\'t know how to find the thickness of that graph yet')
 
@@ -78,6 +88,10 @@ def test_thickness():
 
     print 'K9 should have thickness 3...'
     assert thickness(_from_edge_list(edgesOfK9)) == 3
+    print 'Passed.'
+
+    print 'K5 minus one edge should have thickness 1...'
+    assert thickness(_from_edge_list(edgesOfK5[:-1])) == 1
     print 'Passed.'
 
 
