@@ -63,6 +63,31 @@ def thickness(G):
     raise NotImplementedError('We don\'t know how to find the thickness of that graph yet')
 
 
+def naive_thickness(g):
+    vs = set()
+    gs = [nx.Graph()]
+    for e in g.edges():
+        vs.add(e[0])
+        vs.add(e[1])
+        added = False
+        for current in gs:
+            current.add_edge(e[0], e[1])
+            if pl.is_planar(current):
+                added = True
+                break
+            else:
+                current.remove_edge(e[0], e[1])
+
+        if not added:
+            ng = nx.Graph()
+            ng.add_edge(e[0], e[1])
+            gs.append(ng)
+    for g in gs:
+        for v in vs:
+            g.add_node(v)
+    return len(gs)
+
+
 # _from_edge_list()
 #
 # utility function to convert edge lists to networkx graphs
