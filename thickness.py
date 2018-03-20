@@ -37,6 +37,8 @@ def edge_count_of_complete_graph(n):
 # work-in-progress function
 #
 # returns an integer representing the thickness of graph g
+#  should return the same results as naive_thickness; however, this function contains optimizations for known
+#  graph characterizations
 #
 # tested by test_thickness()
 # See: http://mathworld.wolfram.com/GraphThickness.html
@@ -60,9 +62,23 @@ def thickness(G):
     if is_planar(G):
         return 1
 
-    raise NotImplementedError('We don\'t know how to find the thickness of that graph yet')
+    # All other graphs
+    #
+    # since we couldn't find a characterization that helps with this graph, we check using
+    # Alex's brute-force search algorithm
+    return naive_thickness(G)
 
 
+# naive_thickness()
+#
+# Alex's algorithm to return the thickness of a graph via
+#  brute-force search
+#
+# returns an integer representing the thickness of graph g
+#  however, it may not do so efficiently; use thickness() to receive all optimizations from this library
+#
+# tested by test_naive_thickness()
+# See: http://mathworld.wolfram.com/GraphThickness.html
 def naive_thickness(g):
     vs = set()
     gs = [nx.Graph()]
@@ -72,7 +88,7 @@ def naive_thickness(g):
         added = False
         for current in gs:
             current.add_edge(e[0], e[1])
-            if pl.is_planar(current):
+            if is_planar(current):
                 added = True
                 break
             else:
@@ -99,25 +115,48 @@ def _from_edge_list(edges):
     return G
 
 
+# test_naive_thickness()
+#
+# unit testing for the function naive_thickness()
+def test_naive_thickness():
+    print 'test_naive_thickness()'
+    print '\tK5 should have thickness 2...'
+    assert naive_thickness(_from_edge_list(edgesOfK5)) == 2
+    print '\tPassed.'
+
+    print '\tK8 should have thickness 2...'
+    assert naive_thickness(_from_edge_list(edgesOfK8)) == 2
+    print '\tPassed.'
+
+    print '\tK9 should have thickness 3...'
+    assert naive_thickness(_from_edge_list(edgesOfK9)) == 3
+    print '\tPassed.'
+
+    print '\tK5 minus one edge should have thickness 1...'
+    assert naive_thickness(_from_edge_list(edgesOfK5[:-1])) == 1
+    print '\tPassed.'
+
+
 # test_thickness()
 #
 # unit testing for the function thickness()
 def test_thickness():
-    print 'K5 should have thickness 2...'
+    print 'test_thickness()'
+    print '\tK5 should have thickness 2...'
     assert thickness(_from_edge_list(edgesOfK5)) == 2
-    print 'Passed.'
+    print '\tPassed.'
 
-    print 'K8 should have thickness 2...'
+    print '\tK8 should have thickness 2...'
     assert thickness(_from_edge_list(edgesOfK8)) == 2
-    print 'Passed.'
+    print '\tPassed.'
 
-    print 'K9 should have thickness 3...'
+    print '\tK9 should have thickness 3...'
     assert thickness(_from_edge_list(edgesOfK9)) == 3
-    print 'Passed.'
+    print '\tPassed.'
 
-    print 'K5 minus one edge should have thickness 1...'
+    print '\tK5 minus one edge should have thickness 1...'
     assert thickness(_from_edge_list(edgesOfK5[:-1])) == 1
-    print 'Passed.'
+    print '\tPassed.'
 
 
 # test()
@@ -126,6 +165,7 @@ def test_thickness():
 def test():
     print '----Unit Testing----'
     test_thickness()
+    test_naive_thickness()
     print 'Passed all unit tests.'
     print '--End Unit Testing--'
 
