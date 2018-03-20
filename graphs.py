@@ -171,3 +171,23 @@ edgesOfMysteryGraph3 = [(1, 25), (1, 26), (1, 27), (1, 28), (2,
    23), (20, 24), (21, 25), (21, 26), (21, 27), (21, 28), (22,
    25), (22, 26), (22, 27), (22, 28), (23, 25), (23, 26), (23,
    27), (23, 28), (24, 25), (24, 26), (24, 27), (24, 28)]
+
+
+# allGraphs
+#
+# array of tuples
+#
+# contains all of the graphs from this file as an array of tuples in which
+#  the first element is the name and the second argument is the edge array
+allGraphs = [
+    ('K5', edgesOfK5),
+    ('K8', edgesOfK8),
+    ('K9', edgesOfK9),
+    ('Graph 1', edgesOfGraph1),
+    ('Graph 2', edgesOfGraph2),
+    ('Graph 3', edgesOfGraph3),
+    ('Graph 4', edgesOfGraph4),
+    ('Mystery Graph 1', edgesOfMysteryGraph1),
+    ('Mystery Graph 2', edgesOfMysteryGraph2),
+    ('Mystery Graph 3', edgesOfMysteryGraph3),
+]

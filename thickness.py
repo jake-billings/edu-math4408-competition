@@ -54,7 +54,7 @@ def thickness(G):
         if G.number_of_nodes() == 9 or G.number_of_nodes() == 10:
             return 3
         else:
-            return floor((G.number_of_nodes() + 7) / 6)
+            return int(floor((G.number_of_nodes() + 7) / 6))
 
     # Planar Graphs
     #
@@ -171,5 +171,14 @@ def test():
 
 
 # if anybody ever bothers running this file, run the test function
+# then, output the thickness of all of the graphs Dr. Gethner gave us
 if __name__ == '__main__':
+    # run unit tests
     test()
+
+    # allGraphs is an array of tuples
+    #  where the first element is the name of the edge set
+    #  and the second element is the edge set itself
+    for g in allGraphs:
+        print 'Calculating thickness of ' + g[0] + '...'
+        print 'Result: ' + str(thickness(_from_edge_list(g[1])))
