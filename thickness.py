@@ -104,6 +104,51 @@ def naive_thickness(g):
     return len(gs)
 
 
+def round_robin_thickness(g):
+    naive_best = naive_thickness(g)
+    if naive_best == 1:
+        return 1
+
+    gs = [nx.Graph() for _ in range(naive_best - 1)]
+    gedges = [e for e in g.edges()]
+    gedges.sort()
+
+    vs = set()
+    for e in g.edges():
+        vs.add(e[0])
+        vs.add(e[1])
+
+    for v in vs:
+        for cur in gs:
+            cur.add_node(v)
+
+    not_added = []
+    for i, edge in enumerate(gedges):
+        gi = i % len(gs)
+        gs[gi].add_edge(edge[0], edge[1])
+        if not is_planar(gs[gi]):
+            not_added.append(edge)
+            gs[gi].remove_edge(edge[0], edge[1])
+
+    not_added_again = []
+    for e in not_added:
+        added = False
+        for gcur in gs:
+            gcur.add_edge(e[0], e[1])
+            if is_planar(gcur):
+                added = True
+                break
+            else:
+                gcur.remove_edge(e[0], e[1])
+
+        if not added:
+            not_added_again.append(e)
+
+    if len(not_added_again) > 0:
+        return naive_best
+
+    return len(gs)
+
 # _from_edge_list()
 #
 # utility function to convert edge lists to networkx graphs
