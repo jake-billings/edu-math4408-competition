@@ -90,6 +90,15 @@ def thickness(G):
 # tested by test_naive_thickness()
 # See: http://mathworld.wolfram.com/GraphThickness.html
 def naive_thickness(g):
+    return len(naive_thickness_graphs(g))
+
+
+def naive_thickness_graphs(g):
+    """
+    Generate the thickness graphs themselves
+    :param g:
+    :return:
+    """
     vs = set()
     gs = [nx.Graph()]
     for e in g.edges():
@@ -111,7 +120,85 @@ def naive_thickness(g):
     for g in gs:
         for v in vs:
             g.add_node(v)
-    return len(gs)
+    return gs
+
+
+def round_robin_thickness(g):
+    return len(round_robin_thickness_graphs(g))
+
+
+def round_robin_thickness_graphs(g):
+    """
+    Generate round robin thickness graphs
+    Take best known solution (naive)
+    Allocate n-1 graphs (if > 1 in naive solution)
+    Sort Edges
+    Round robin edge assignment
+    (i.e. try to spread out the edges for each node across the graphs)
+    :param g:
+    :return:
+    """
+    naive_best = naive_thickness_graphs(g)
+    if len(naive_best) == 1:
+        return naive_best
+
+    gs = [nx.Graph() for _ in range(len(naive_best) - 1)]
+    gedges = [e for e in g.edges()]
+    gedges.sort()
+
+    vs = set()
+    for e in g.edges():
+        vs.add(e[0])
+        vs.add(e[1])
+
+    for v in vs:
+        for cur in gs:
+            cur.add_node(v)
+
+    not_added = []
+    for i, edge in enumerate(gedges):
+        gi = i % len(gs)
+        gs[gi].add_edge(edge[0], edge[1])
+        if not is_planar(gs[gi]):
+            not_added.append(edge)
+            gs[gi].remove_edge(edge[0], edge[1])
+
+    not_added_again = []
+    for e in not_added:
+        added = False
+        for gcur in gs:
+            gcur.add_edge(e[0], e[1])
+            if is_planar(gcur):
+                added = True
+                break
+            else:
+                gcur.remove_edge(e[0], e[1])
+
+        if not added:
+            not_added_again.append(e)
+
+    if len(not_added_again) > 0:
+        return naive_best
+
+    return gs
+
+
+def best_thickness(g):
+    """
+    Thickness of best implementation so far
+    :param g: nx.Graph
+    :return: int
+    """
+    return len(best_thickness_graphs(g))
+
+
+def best_thickness_graphs(g):
+    """
+    The best implementation so far, change when we get a better one...
+    :param g: nx.Graph
+    :return: nx.Graph[]
+    """
+    return round_robin_thickness_graphs(g)
 
 
 # brute_force_thickness()
@@ -164,56 +251,72 @@ def test_brute_force_thickness():
 #
 # unit testing for the function naive_thickness()
 def test_naive_thickness():
-    print 'test_naive_thickness()'
-    print '\tK5 should have thickness 2...'
+    print('test_naive_thickness()')
+    print('\tK5 should have thickness 2...')
     assert naive_thickness(_from_edge_list(edgesOfK5)) == 2
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK8 should have thickness 2...'
+    print('\tK8 should have thickness 2...')
     assert naive_thickness(_from_edge_list(edgesOfK8)) == 2
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK9 should have thickness 3...'
+    print('\tK9 should have thickness 3...')
     assert naive_thickness(_from_edge_list(edgesOfK9)) == 3
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK5 minus one edge should have thickness 1...'
+    print('\tK5 minus one edge should have thickness 1...')
     assert naive_thickness(_from_edge_list(edgesOfK5[:-1])) == 1
-    print '\tPassed.'
+    print('\tPassed.')
 
 
 # test_thickness()
 #
 # unit testing for the function thickness()
 def test_thickness():
-    print 'test_thickness()'
-    print '\tK5 should have thickness 2...'
+    print('test_thickness()')
+    print('\tK5 should have thickness 2...')
     assert thickness(_from_edge_list(edgesOfK5)) == 2
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK8 should have thickness 2...'
+    print('\tK8 should have thickness 2...')
     assert thickness(_from_edge_list(edgesOfK8)) == 2
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK9 should have thickness 3...'
+    print('\tK9 should have thickness 3...')
     assert thickness(_from_edge_list(edgesOfK9)) == 3
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK5 minus one edge should have thickness 1...'
+    print('\tK5 minus one edge should have thickness 1...')
     assert thickness(_from_edge_list(edgesOfK5[:-1])) == 1
-    print '\tPassed.'
+    print('\tPassed.')
+
+
+# test_isomorphic()
+#
+# Test that the best implementation generates sets of graphs that are isomorphic to the original
+def test_isomorphic():
+    for k, g in allGraphs:
+        g = _from_edge_list(g)
+        results = best_thickness_graphs(g)
+        current = nx.Graph()
+        for result in results:
+            for e in result.edges():
+                current.add_edge(e[0], e[1])
+
+        assert nx.is_isomorphic(g, current)
 
 
 # test()
 #
 # unit testing for graph thickness functions
 def test():
-    print '----Unit Testing----'
+    print('----Unit Testing----')
     test_thickness()
     test_naive_thickness()
     test_brute_force_thickness()
-    print 'Passed all unit tests.'
-    print '--End Unit Testing--'
+    test_isomorphic()
+    print('Passed all unit tests.')
+    print('--End Unit Testing--')
 
 
 # if anybody ever bothers running this file, run the test function
