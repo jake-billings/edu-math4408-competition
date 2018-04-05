@@ -76,7 +76,7 @@ def thickness(G):
     # Alex's brute-force-like search algorithm
     #
     # note: this is not guaranteed to yield the actual thickness; only a number greater than or equal to it
-    return naive_thickness(G)
+    return round_robin_thickness(G)
 
 
 # naive_thickness()
