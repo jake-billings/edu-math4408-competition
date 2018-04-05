@@ -24,12 +24,14 @@ import networkx as nx
 # import planarity testing
 from planarity import is_planar
 
+from stolen import algorithm_u
+
 
 # edge_count_of_complete_graph
 #
 # returns the number of edges that are in a complete graph on n vertices
 def edge_count_of_complete_graph(n):
-    return n * (n-1) / 2
+    return n * (n - 1) / 2
 
 
 # thickness()
@@ -62,19 +64,27 @@ def thickness(G):
     if is_planar(G):
         return 1
 
+    # Small Graphs
+    #
+    # If a graph is pretty small, we can run a brute-force-search
+    if G.number_of_edges() < 8:
+        return brute_force_thickness(G)
+
     # All other graphs
     #
     # since we couldn't find a characterization that helps with this graph, we check using
-    # Alex's brute-force search algorithm
+    # Alex's brute-force-like search algorithm
+    #
+    # note: this is not guaranteed to yield the actual thickness; only a number greater than or equal to it
     return naive_thickness(G)
 
 
 # naive_thickness()
 #
 # Alex's algorithm to return the thickness of a graph via
-#  brute-force search
+#  brute-force-like search
 #
-# returns an integer representing the thickness of graph g
+# returns an integer that is greater than or equal to the thickness of graph g
 #  however, it may not do so efficiently; use thickness() to receive all optimizations from this library
 #
 # tested by test_naive_thickness()
@@ -104,6 +114,27 @@ def naive_thickness(g):
     return len(gs)
 
 
+# brute_force_thickness()
+#
+# returns the thickness of a graph via brute-force search
+# this function does not return in a reasonable amount of time for graphs of thickness >8
+def brute_force_thickness(g):
+    smallest_thickness = 500
+    for thickness_guess in range(2, 4):
+        for edge_arrangement in algorithm_u(g.edges(), thickness_guess):
+            all_planar = True
+            for layer in edge_arrangement:
+                if not is_planar(_from_edge_list(layer)):
+                    all_planar = False
+                    break
+            if all_planar and len(edge_arrangement) < smallest_thickness:
+                smallest_thickness = len(edge_arrangement)
+                break
+        if smallest_thickness <= thickness_guess:
+            break
+    return smallest_thickness
+
+
 # _from_edge_list()
 #
 # utility function to convert edge lists to networkx graphs
@@ -113,6 +144,20 @@ def _from_edge_list(edges):
     G = nx.Graph()
     G.add_edges_from(edges)
     return G
+
+
+# test_naive_thickness()
+#
+# unit testing for the function naive_thickness()
+def test_brute_force_thickness():
+    print 'test_brute_force_thickness()'
+    print '\tK5 should have thickness 2...'
+    assert brute_force_thickness(_from_edge_list(edgesOfK5)) == 2
+    print '\tPassed.'
+
+    print '\tK8 should have thickness 2...'
+    assert brute_force_thickness(_from_edge_list(edgesOfK8)) == 2
+    print '\tPassed.'
 
 
 # test_naive_thickness()
@@ -166,6 +211,7 @@ def test():
     print '----Unit Testing----'
     test_thickness()
     test_naive_thickness()
+    test_brute_force_thickness()
     print 'Passed all unit tests.'
     print '--End Unit Testing--'
 
@@ -180,5 +226,5 @@ if __name__ == '__main__':
     #  where the first element is the name of the edge set
     #  and the second element is the edge set itself
     for g in allGraphs:
-        print 'Calculating thickness of ' + g[0] + '...'
+        print 'Calculating thickness of ' + g[0] + ' (e=' + str(len(g[1])) + ')...'
         print 'Result: ' + str(thickness(_from_edge_list(g[1])))
