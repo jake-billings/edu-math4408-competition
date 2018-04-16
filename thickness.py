@@ -183,6 +183,46 @@ def round_robin_thickness_graphs(g):
     return gs
 
 
+def compress_decompositions(decomps):
+    """
+
+    :param decomps: nx.Graph[]
+    :return: nx.Graph[]
+    """
+    if len(decomps) < 3:
+        # Can't compress 1, and should be 1 if it's 2 but could have been 1
+        return decomps
+    new_decomps = [nx.Graph() for _ in range(len(decomps) - 1)]
+    min_decomp = decomps[-1]
+
+    # Add all last graph edges to new first decomp
+    for e in min_decomp.edges():
+        new_decomps[0].add_edge(e[0], e[1])
+
+    notAdded = []
+    for i, decomp in enumerate(decomps[:-1]):
+        for e in decomp.edges():
+            new_decomps[i].add_edge(e[0], e[1])
+            if not is_planar(new_decomps[i]):
+                new_decomps[i].remove_edge(e[0], e[1])
+                notAdded.append(e)
+
+    for e in notAdded:
+        added = False
+        for g in new_decomps[1:]:
+            g.add_edge(e[0], e[1])
+            if not is_planar(g):
+                g.remove_edge(e[0], e[1])
+            else:
+                added = True
+                break
+
+        if not added:
+            return decomps
+
+    return new_decomps
+
+
 def best_thickness(g):
     """
     Thickness of best implementation so far
@@ -198,7 +238,7 @@ def best_thickness_graphs(g):
     :param g: nx.Graph
     :return: nx.Graph[]
     """
-    return round_robin_thickness_graphs(g)
+    return compress_decompositions(round_robin_thickness_graphs(g))
 
 
 # brute_force_thickness()
@@ -237,14 +277,14 @@ def _from_edge_list(edges):
 #
 # unit testing for the function naive_thickness()
 def test_brute_force_thickness():
-    print 'test_brute_force_thickness()'
-    print '\tK5 should have thickness 2...'
+    print('test_brute_force_thickness()')
+    print('\tK5 should have thickness 2...')
     assert brute_force_thickness(_from_edge_list(edgesOfK5)) == 2
-    print '\tPassed.'
+    print('\tPassed.')
 
-    print '\tK8 should have thickness 2...'
+    print('\tK8 should have thickness 2...')
     assert brute_force_thickness(_from_edge_list(edgesOfK8)) == 2
-    print '\tPassed.'
+    print('\tPassed.')
 
 
 # test_naive_thickness()
@@ -329,5 +369,5 @@ if __name__ == '__main__':
     #  where the first element is the name of the edge set
     #  and the second element is the edge set itself
     for g in allGraphs:
-        print 'Calculating thickness of ' + g[0] + ' (e=' + str(len(g[1])) + ')...'
-        print 'Result: ' + str(thickness(_from_edge_list(g[1])))
+        print('Calculating thickness of ' + g[0] + ' (e=' + str(len(g[1])) + ')...')
+        print('Result: ' + str(thickness(_from_edge_list(g[1]))))
