@@ -67,7 +67,7 @@ def thickness(G):
     # Small Graphs
     #
     # If a graph is pretty small, we can run a brute-force-search
-    if G.number_of_edges() < 8:
+    if G.number_of_edges() < 29:
         return brute_force_thickness(G)
 
     # All other graphs
@@ -76,7 +76,7 @@ def thickness(G):
     # Alex's brute-force-like search algorithm
     #
     # note: this is not guaranteed to yield the actual thickness; only a number greater than or equal to it
-    return round_robin_thickness(G)
+    return best_thickness(G)
 
 
 # naive_thickness()
@@ -220,7 +220,83 @@ def compress_decompositions(decomps):
         if not added:
             return decomps
 
-    return new_decomps
+    return compress_decompositions(new_decomps)
+
+
+def add_all_vertices(g, vs):
+    for v in vs:
+        g.add_node(v)
+
+
+def add_edge(g, e):
+    g.add_edge(e[0], e[1])
+    if is_planar(g):
+        return True
+    g.remove_edge(e[0], e[1])
+    return False
+
+
+def connect_vertex(g, e):
+    if nx.has_path(g, e[0], e[1]):
+        return False
+    return add_edge(g, e)
+
+
+def make_tree(g, es):
+    not_added = []
+    for e in es:
+        if not connect_vertex(g, e):
+            not_added.append(e)
+
+    return not_added
+
+
+def connect_length(g, es, l=2):
+    if len(es) == 0:
+        return []
+
+    added = []
+    max_len = 0
+    for e in es:
+        sp = len(nx.shortest_path(g, e[0], e[1]))
+        max_len = max(max_len, sp)
+        if len(nx.shortest_path(g, e[0], e[1])) == l:
+            if add_edge(g, e):
+                added.append(e)
+
+    if len(added) > 0:
+        # Edges have been added, so lengths have changed, try adding at min length again
+        not_added = [e for e in es if e not in added]
+        if len(not_added) == 0:
+            return []
+        return connect_length(g, not_added, 2)
+    elif max_len > l:
+        # No additions at this length, but longer paths exist
+        return connect_length(g, es, l + 1)
+    else:
+        return es
+
+
+def tree_thickness_graphs(g):
+    # Create tree before adding any other edges, then add by path length
+    gs = []
+    vs = set()
+    for v in g:
+        vs.add(v)
+    es = [e for e in g.edges()]
+
+    while len(es) > 0:
+        current = nx.Graph()
+        add_all_vertices(current, vs)
+        es = make_tree(current, es)
+        es = connect_length(current, es, 2)
+        gs.append(current)
+
+    return gs
+
+
+def tree_thickness(g):
+    return len(tree_thickness_graphs(g))
 
 
 def best_thickness(g):
@@ -238,7 +314,24 @@ def best_thickness_graphs(g):
     :param g: nx.Graph
     :return: nx.Graph[]
     """
-    return compress_decompositions(round_robin_thickness_graphs(g))
+    naive = compress_decompositions(naive_thickness_graphs(g))
+    round_robin = compress_decompositions(round_robin_thickness_graphs(g))
+    tree = compress_decompositions(tree_thickness_graphs(g))
+
+    naive_len = len(naive)
+    round_robin_len = len(round_robin)
+    tree_len = len(tree)
+
+    min_len = min(naive_len, round_robin_len, tree_len)
+
+    if min_len == naive_len:
+        return naive
+    elif min_len == round_robin_len:
+        return round_robin
+    elif min_len == tree_len:
+        return tree
+    else:
+        return round_robin
 
 
 # brute_force_thickness()
@@ -335,6 +428,7 @@ def test_thickness():
 #
 # Test that the best implementation generates sets of graphs that are isomorphic to the original
 def test_isomorphic():
+    print('test_isomorphic()')
     for k, g in allGraphs:
         g = _from_edge_list(g)
         results = best_thickness_graphs(g)
@@ -343,7 +437,9 @@ def test_isomorphic():
             for e in result.edges():
                 current.add_edge(e[0], e[1])
 
+        print('{} decomposition union is isomorphic to its source graph...'.format(k))
         assert nx.is_isomorphic(g, current)
+        print('Passed')
 
 
 # test()
