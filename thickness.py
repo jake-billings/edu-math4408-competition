@@ -73,7 +73,7 @@ def thickness(G):
     # All other graphs
     #
     # since we couldn't find a characterization that helps with this graph, we check using
-    # Alex's brute-force-like search algorithm
+    # Alex's heuristic algorithms
     #
     # note: this is not guaranteed to yield the actual thickness; only a number greater than or equal to it
     return best_thickness(G)
